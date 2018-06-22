@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"io"
 	"os"
 
 	"pault.ag/go/freeport/chunks"
@@ -20,12 +20,17 @@ func main() {
 
 	fd, err := os.Open("/bin/bash")
 	ohshit(err)
+	defer fd.Close()
 
 	chunkStore, err := chunks.New(*store, 1024)
 	ohshit(err)
 
-	ids, err := chunkStore.Write(fd)
+	obj, err := chunkStore.Write(fd)
 	ohshit(err)
 
-	fmt.Printf("%x\n", ids)
+	handle, err := chunkStore.Open(*obj)
+	ohshit(err)
+
+	_, err = io.Copy(os.Stdout, handle)
+	ohshit(err)
 }
