@@ -31,6 +31,8 @@ func main() {
 	handle, err := chunkStore.Open(*obj)
 	ohshit(err)
 
+	defer handle.Close()
+
 	_, err = io.Copy(os.Stdout, handle)
 	ohshit(err)
 }
