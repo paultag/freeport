@@ -34,23 +34,28 @@ func (s *Store) pathName(id []byte) string {
 }
 
 //
-func (s *Store) Commit(writer *Writer) error {
+func (s *Store) Open(id []byte) (*os.File, error) {
+	return os.Open(s.pathName(id))
+}
+
+//
+func (s *Store) Commit(writer *Writer) ([]byte, error) {
 	defer writer.Close()
 	hash := writer.Sum(nil)
 
 	path := s.pathName(hash)
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return err
+		return nil, err
 	}
 
 	err := tmp.Link(writer.Fd(), path)
-	if err == unix.EEXIST {
+	if err == unix.EEXIST || err == nil {
 		/* We can ignore EEXIST, since we are doing content-addressable hashes.
 		 * In the case where it exists, we can just drop out, and let the
 		 * inode get unlinked and garbage collected */
-		return nil
+		return hash, nil
 	}
-	return err
+	return nil, err
 }
 
 //
